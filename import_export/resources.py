@@ -405,9 +405,7 @@ class Resource(metaclass=DeclarativeMetaclass):
         for field_name, f in self.fields.items():
             if f == field:
                 return field_name
-        raise AttributeError(
-            "Field %s does not exists in %s resource" % (field, self.__class__)
-        )
+        raise AttributeError("Field %s does not exist in %s resource" % (field, self.__class__))
 
     def init_instance(self, row=None):
         """
@@ -803,9 +801,7 @@ class Resource(metaclass=DeclarativeMetaclass):
                 if len(instance_values) != len(original_values):
                     return False
 
-                if sorted(v.pk for v in instance_values) != sorted(
-                    v.pk for v in original_values
-                ):
+                if sorted(v.pk for v in instance_values) != sorted(v.pk for v in original_values):
                     return False
             else:
                 if field.get_value(instance) != field.get_value(original):

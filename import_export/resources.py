@@ -1357,8 +1357,8 @@ class ModelDeclarativeMetaclass(DeclarativeMetaclass):
                     continue
 
                 if f.name in declared_fields:
-                    # If model field is declared in `ModelResource`, remove it from `declared_fields`
-                    # to keep exact order of model fields
+                    # If a model field is declared in `ModelResource`, remove it from
+                    # `declared_fields` to keep the exact order of model fields
                     field = declared_fields.pop(f.name)
                 else:
                     field = new_class.field_from_django_field(f.name, f, readonly=False)
@@ -1527,7 +1527,12 @@ class ModelResource(Resource, metaclass=ModelDeclarativeMetaclass):
             issubclass(django_field.__class__, fields.CharField)
             and django_field.blank is True
         ):
-            widget_kwargs.update({"coerce_to_string": True, "allow_blank": True})
+            widget_kwargs.update(
+                {
+                    "coerce_to_string": True,
+                    "allow_blank": True,
+                }
+            )
         return widget_kwargs
 
     @classmethod

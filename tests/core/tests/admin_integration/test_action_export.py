@@ -3,9 +3,6 @@ from datetime import date, datetime
 from unittest import mock
 from unittest.mock import MagicMock, PropertyMock, patch
 
-from core.admin import CategoryAdmin
-from core.models import Author, Book, Category, UUIDCategory
-from core.tests.admin_integration.mixins import AdminTestMixin
 from django.contrib import admin
 from django.contrib.admin import AdminSite
 from django.contrib.auth.models import User
@@ -16,6 +13,9 @@ from django.test.testcases import TestCase
 from django.test.utils import override_settings
 from django.urls import reverse
 
+from core.admin import CategoryAdmin
+from core.models import Author, Book, Category, UUIDCategory
+from core.tests.admin_integration.mixins import AdminTestMixin
 from import_export.admin import ExportMixin
 
 
@@ -347,10 +347,15 @@ class TestExportFilterPreservation(AdminTestMixin, TestCase):
                 message=r"The 'get_valid_export_item_pks\(\)' method",
                 category=DeprecationWarning,
             )
+            # Ensure form field names are correctly prefixed before posting
+            self._prepend_form_prefix(export_data)
             final_response = self._post_url_response(export_url, export_data)
 
         # Should get CSV export that respects the filter context
-        self.assertEqual(final_response["Content-Type"], "text/csv")
+        # Be tolerant of charset suffixes like 'text/csv; charset=utf-8'
+        self.assertTrue(
+            final_response.get("Content-Type", "").split(";")[0].strip() == "text/csv"
+        )
         content = final_response.content.decode()
 
         # Verify the export contains the expected filtered data

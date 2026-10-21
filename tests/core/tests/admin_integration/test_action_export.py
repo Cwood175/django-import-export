@@ -3,9 +3,6 @@ from datetime import date, datetime
 from unittest import mock
 from unittest.mock import MagicMock, PropertyMock, patch
 
-from core.admin import CategoryAdmin
-from core.models import Author, Book, Category, UUIDCategory
-from core.tests.admin_integration.mixins import AdminTestMixin
 from django.contrib import admin
 from django.contrib.admin import AdminSite
 from django.contrib.auth.models import User
@@ -16,6 +13,9 @@ from django.test.testcases import TestCase
 from django.test.utils import override_settings
 from django.urls import reverse
 
+from core.admin import CategoryAdmin
+from core.models import Author, Book, Category, UUIDCategory
+from core.tests.admin_integration.mixins import AdminTestMixin
 from import_export.admin import ExportMixin
 
 
@@ -350,7 +350,26 @@ class TestExportFilterPreservation(AdminTestMixin, TestCase):
             final_response = self._post_url_response(export_url, export_data)
 
         # Should get CSV export that respects the filter context
-        self.assertEqual(final_response["Content-Type"], "text/csv")
+        try:
+            # original strict assertion
+            self.assertEqual(final_response["Content-Type"], "text/csv")
+        except Exception:
+            # Provide a clearer diagnostic if an HTML error page (or any other unexpected response)
+            # was returned instead of the expected CSV response.
+            try:
+                content_type = final_response["Content-Type"]
+            except Exception:
+                content_type = getattr(final_response, "content_type", None)
+            status = getattr(final_response, "status_code", None)
+            body = (
+                final_response.content.decode(errors="replace")
+                if hasattr(final_response, "content")
+                else str(final_response)
+            )
+            self.fail(
+                f"Expected an HTTP CSV response (Content-Type 'text/csv') but received '{content_type}' (status={status}). Response body:\n{body}"
+            )
+
         content = final_response.content.decode()
 
         # Verify the export contains the expected filtered data

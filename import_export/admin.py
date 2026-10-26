@@ -248,9 +248,7 @@ class ImportMixin(BaseImportMixin, ImportExportMixinBase):
     def add_success_message(self, result, request):
         opts = self.model._meta
 
-        success_message = _(
-            "Import finished, with {} new and " "{} updated {}."
-        ).format(
+        success_message = _("Import finished, with {} new and {} updated {}.").format(
             result.totals[RowResult.IMPORT_TYPE_NEW],
             result.totals[RowResult.IMPORT_TYPE_UPDATE],
             opts.verbose_name_plural,
@@ -484,7 +482,7 @@ class ImportMixin(BaseImportMixin, ImportExportMixinBase):
         tmp_storage = tmp_storage_cls(
             encoding=encoding, read_mode=input_format.get_read_mode()
         )
-        data = bytes()
+        data = b""
         for chunk in import_file.chunks():
             data += chunk
 
@@ -556,7 +554,7 @@ class ImportMixin(BaseImportMixin, ImportExportMixinBase):
                 # rollback_on_validation_errors is set to True so that we rollback on
                 # validation errors. If this is not done validation errors would be
                 # silently skipped.
-                data = bytes()
+                data = b""
                 for chunk in import_file.chunks():
                     data += chunk
                 try:
@@ -747,6 +745,7 @@ class ExportMixin(BaseExportMixin, ImportExportMixinBase):
 
         class FakePaginator:
             count = 0
+
         original_get_paginator = self.get_paginator
         self.get_paginator = lambda request, queryset, per_page: FakePaginator()
         cl = ChangeList(**changelist_kwargs)

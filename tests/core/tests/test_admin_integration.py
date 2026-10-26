@@ -8,8 +8,6 @@ from unittest.mock import MagicMock, patch
 import chardet
 import django
 import tablib
-from core.admin import AuthorAdmin, BookAdmin, CustomBookAdmin, ImportMixin
-from core.models import Author, Book, Category, EBook, Parent
 from django.contrib.admin.models import DELETION, LogEntry
 from django.contrib.auth.models import User
 from django.core.exceptions import PermissionDenied
@@ -20,6 +18,8 @@ from django.utils.translation import gettext_lazy as _
 from openpyxl.reader.excel import load_workbook
 from tablib import Dataset
 
+from core.admin import AuthorAdmin, BookAdmin, CustomBookAdmin, ImportMixin
+from core.models import Author, Book, Category, EBook, Parent
 from import_export import formats
 from import_export.admin import (
     ExportActionMixin,
@@ -32,7 +32,7 @@ from import_export.formats.base_formats import DEFAULT_FORMATS
 from import_export.tmp_storages import TempFolderStorage
 
 
-class AdminTestMixin(object):
+class AdminTestMixin:
     category_change_url = "/admin/core/category/"
     book_import_url = "/admin/core/book/import/"
     book_process_import_url = "/admin/core/book/process_import/"
@@ -680,14 +680,15 @@ class ExportAdminIntegrationTest(AdminTestMixin, TestCase):
             "file_format": "0",
         }
         date_str = datetime.now().strftime("%Y-%m-%d")
-        with self.assertNumQueries(7):  # Should not contain COUNT queries from ModelAdmin.get_results()
+        # Should not contain COUNT queries from ModelAdmin.get_results()
+        with self.assertNumQueries(7):
             response = self.client.post("/admin/core/book/export/", data)
         self.assertEqual(response.status_code, 200)
         self.assertTrue(response.has_header("Content-Disposition"))
         self.assertEqual(response["Content-Type"], "text/csv")
         self.assertEqual(
             response["Content-Disposition"],
-            'attachment; filename="Book-{}.csv"'.format(date_str),
+            f'attachment; filename="Book-{date_str}.csv"',
         )
         self.assertEqual(
             b"id,name,author,author_email,imported,published,"
@@ -711,7 +712,7 @@ class ExportAdminIntegrationTest(AdminTestMixin, TestCase):
         self.assertEqual(response["Content-Type"], "text/csv")
         self.assertEqual(
             response["Content-Disposition"],
-            'attachment; filename="Book-{}.csv"'.format(date_str),
+            f'attachment; filename="Book-{date_str}.csv"',
         )
         self.assertEqual(b"id,name\r\n", response.content)
 
@@ -737,7 +738,7 @@ class ExportAdminIntegrationTest(AdminTestMixin, TestCase):
         self.assertEqual(response["Content-Type"], "text/csv")
         self.assertEqual(
             response["Content-Disposition"],
-            'attachment; filename="LegacyBook-{}.csv"'.format(date_str),
+            f'attachment; filename="LegacyBook-{date_str}.csv"',
         )
         self.assertEqual(b"id,name\r\n", response.content)
 
@@ -810,7 +811,7 @@ class FilteredExportAdminIntegrationTest(AdminTestMixin, TestCase):
         self.assertEqual(response["Content-Type"], "text/csv")
         self.assertEqual(
             response["Content-Disposition"],
-            'attachment; filename="EBook-{}.csv"'.format(date_str),
+            f'attachment; filename="EBook-{date_str}.csv"',
         )
         self.assertEqual(
             b"id,name,author,author_email,imported,published,"
@@ -1030,7 +1031,7 @@ class ExportActionAdminIntegrationTest(AdminTestMixin, TestCase):
         date_str = datetime.now().strftime("%Y-%m-%d")
         self.assertEqual(
             response["Content-Disposition"],
-            'attachment; filename="Category-{}.csv"'.format(date_str),
+            f'attachment; filename="Category-{date_str}.csv"',
         )
 
     def test_export_no_format_selected(self):
@@ -1493,7 +1494,7 @@ class TestImportSkipConfirm(AdminTestMixin, TransactionTestCase):
             follow=True,
             encoding="utf-8-sig",
             regex_in_response=(
-                ".*UnicodeDecodeError.* encountered " "while trying to read file"
+                ".*UnicodeDecodeError.* encountered while trying to read file"
             ),
         )
 
